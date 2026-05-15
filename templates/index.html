@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Handwritten Digit Recognition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+    <div class="background-grid" aria-hidden="true"></div>
+
+    <div class="container">
+        <div class="card">
+            <div class="status-pill">{{ models|length }} Model{% if models|length != 1 %}s{% endif %} Ready</div>
+
+            <h1>Handwritten <span>Digit Recognition</span></h1>
+
+            <p class="subtitle">
+                Predict a digit by uploading an image or drawing it directly.
+            </p>
+
+            <div class="mode-tabs" role="tablist" aria-label="Prediction input modes">
+                <button
+                    class="tab-button {% if active_mode != 'draw' %}active{% endif %}"
+                    type="button"
+                    data-tab-target="upload-panel"
+                >
+                    Upload
+                </button>
+                <button
+                    class="tab-button {% if active_mode == 'draw' %}active{% endif %}"
+                    type="button"
+                    data-tab-target="draw-panel"
+                >
+                    Draw
+                </button>
+            </div>
+
+            <section
+                id="upload-panel"
+                class="mode-panel {% if active_mode == 'draw' %}hidden{% endif %}"
+            >
+                <form action="/predict" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="input_mode" value="upload">
+
+                    <label class="model-picker">
+                        <span>Prediction Model</span>
+                        <select name="model_id">
+                            {% for model in models %}
+                                <option
+                                    value="{{ model.id }}"
+                                    {% if model.id == selected_model_id %}selected{% endif %}
+                                >
+                                    {{ model.display_name }}
+                                    {% if model.accuracy is not none %} - {{ model.accuracy }}% accuracy{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <label class="upload-box" for="digit-image">
+                        <span class="drop-mark" aria-hidden="true"></span>
+                        <span class="upload-title">Drop, paste, or browse an image</span>
+                        <span class="upload-hint">PNG, JPG, JPEG, or BMP</span>
+                        <input id="digit-image" type="file" name="digit_image" accept="image/*">
+                    </label>
+
+                    <div class="preview-box hidden" id="upload-preview-box">
+                        <img id="upload-preview" alt="Selected digit preview">
+                    </div>
+
+                    <button class="primary-button" type="submit">Predict Uploaded Digit</button>
+                </form>
+            </section>
+
+            <section
+                id="draw-panel"
+                class="mode-panel {% if active_mode != 'draw' %}hidden{% endif %}"
+            >
+                <form action="/predict" method="POST" id="draw-form">
+                    <input type="hidden" name="input_mode" value="draw">
+                    <input type="hidden" name="draw_image" id="draw-image">
+
+                    <label class="model-picker">
+                        <span>Prediction Model</span>
+                        <select name="model_id">
+                            {% for model in models %}
+                                <option
+                                    value="{{ model.id }}"
+                                    {% if model.id == selected_model_id %}selected{% endif %}
+                                >
+                                    {{ model.display_name }}
+                                    {% if model.accuracy is not none %} - {{ model.accuracy }}% accuracy{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <div class="canvas-toolbar">
+                        <label for="brush-size">Pencil</label>
+                        <input id="brush-size" type="range" min="10" max="36" value="22">
+                        <button class="secondary-button" type="button" id="clear-canvas">Clear</button>
+                    </div>
+
+                    <div class="canvas-shell">
+                        <canvas
+                            id="digit-canvas"
+                            width="280"
+                            height="280"
+                            aria-label="Drawing area for handwritten digit"
+                        ></canvas>
+                    </div>
+
+                    <button class="primary-button" type="submit">Predict Drawn Digit</button>
+                </form>
+            </section>
+
+            {% if prediction is defined %}
+                <div class="result success">
+                    <h2>Prediction Result</h2>
+                    <div class="result-comparison">
+                        {% if input_image_data_url %}
+                            <div class="comparison-tile">
+                                <h3>Your Input</h3>
+                                <img
+                                    class="comparison-image"
+                                    src="{{ input_image_data_url }}"
+                                    alt="{{ source or 'Input image' }} preview"
+                                >
+                                {% if source %}
+                                    <p class="source">{{ source }}</p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <div class="comparison-tile prediction-tile">
+                            <h3>System Output</h3>
+                            <p class="digit">{{ prediction }}</p>
+                            <p class="confidence">Confidence: {{ confidence }}%</p>
+                            {% if selected_model %}
+                                <p class="source">Model: {{ selected_model.display_name }}</p>
+                                {% if selected_model.accuracy is not none %}
+                                    <p class="source">Model accuracy: {{ selected_model.accuracy }}%</p>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if input_image_data_url %}
+                        <div class="feedback-panel" aria-live="polite">
+                            <h3>Is the output correct?</h3>
+                            <div class="feedback-actions">
+                                <form class="feedback-confirm-form" action="/feedback" method="POST">
+                                    <input type="hidden" name="input_image_data_url" value="{{ input_image_data_url }}">
+                                    <input type="hidden" name="predicted_digit" value="{{ prediction }}">
+                                    <input type="hidden" name="correct_digit" value="{{ prediction }}">
+                                    <input type="hidden" name="confidence" value="{{ confidence }}">
+                                    <input type="hidden" name="source" value="{{ source }}">
+                                    <input type="hidden" name="input_mode" value="{{ input_mode or active_mode or 'upload' }}">
+                                    <input type="hidden" name="model_id" value="{{ selected_model_id }}">
+                                    <button class="secondary-button feedback-correct" type="submit">
+                                        Yes, save as correct
+                                    </button>
+                                </form>
+                                <button class="secondary-button feedback-incorrect" type="button">
+                                    No, choose correct digit
+                                </button>
+                            </div>
+
+                            <form class="feedback-form hidden" action="/feedback" method="POST">
+                                <input type="hidden" name="input_image_data_url" value="{{ input_image_data_url }}">
+                                <input type="hidden" name="predicted_digit" value="{{ prediction }}">
+                                <input type="hidden" name="confidence" value="{{ confidence }}">
+                                <input type="hidden" name="source" value="{{ source }}">
+                                <input type="hidden" name="input_mode" value="{{ input_mode or active_mode or 'upload' }}">
+                                <input type="hidden" name="model_id" value="{{ selected_model_id }}">
+
+                                <label class="model-picker">
+                                    <span>Correct Output</span>
+                                    <select name="correct_digit" required>
+                                        <option value="">Select the correct digit</option>
+                                        {% for digit in range(10) %}
+                                            <option
+                                                value="{{ digit }}"
+                                                {% if correct_digit|string == digit|string %}selected{% endif %}
+                                            >
+                                                {{ digit }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </label>
+
+                                <button class="primary-button" type="submit">
+                                    Save for Retraining
+                                </button>
+                            </form>
+
+                            {% if feedback_message %}
+                                <p class="feedback-message">{{ feedback_message }}</p>
+                            {% endif %}
+
+                            {% if feedback_error %}
+                                <p class="feedback-error">{{ feedback_error }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if error %}
+                <div class="result error">
+                    <h2>Error</h2>
+                    <p>{{ error }}</p>
+                </div>
+            {% endif %}
+
+            <div class="instructions">
+                <h3>Tips</h3>
+                <p>Use one digit only.</p>
+                <p>Make the digit clear and centered.</p>
+                <p>For drawing, write with the pencil on the black canvas.</p>
+                <p>For uploads, avoid blurry or messy background images.</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
