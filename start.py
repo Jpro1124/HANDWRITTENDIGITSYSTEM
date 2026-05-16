@@ -23,7 +23,7 @@ def pull_lfs_models_if_needed():
     if not any(is_git_lfs_pointer(model_file) for model_file in model_files):
         return
 
-    print("Detected Git LFS pointer model files. Running git lfs pull...")
+    print("Detected Git LFS pointer model files. Running git lfs pull...", flush=True)
     subprocess.run(["git", "lfs", "install"], check=False)
     subprocess.run(["git", "lfs", "pull"], check=True)
 
@@ -43,7 +43,8 @@ def pull_lfs_models_if_needed():
 port = os.environ.get("PORT", "8080")
 pull_lfs_models_if_needed()
 
-subprocess.run(
+os.execv(
+    sys.executable,
     [
         sys.executable,
         "-m",
@@ -54,5 +55,4 @@ subprocess.run(
         "180",
         "app:app",
     ],
-    check=True,
 )
