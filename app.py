@@ -77,7 +77,7 @@ def load_joblib_bundle(file_path):
     if is_git_lfs_pointer(file_path):
         raise RuntimeError(
             f"{file_path.name} is a Git LFS pointer, not the real model file. "
-            "Run `git lfs pull` during deployment or make sure Railway pulls LFS files."
+            "Set a model download URL in Railway or upload the real model file."
         )
 
     return joblib.load(file_path)
@@ -90,7 +90,12 @@ def load_model_bundles():
         if not config["path"].exists():
             continue
 
-        bundle = load_joblib_bundle(config["path"])
+        try:
+            bundle = load_joblib_bundle(config["path"])
+        except RuntimeError as exc:
+            print(f"Skipping {config['display_name']}: {exc}", flush=True)
+            continue
+
         loaded_models[model_id] = {
             "id": model_id,
             "display_name": bundle.get("display_name", config["display_name"]),
@@ -103,22 +108,26 @@ def load_model_bundles():
         }
 
     if not loaded_models and LEGACY_MODEL_PATH.exists():
-        bundle = load_joblib_bundle(LEGACY_MODEL_PATH)
-        loaded_models["mnist"] = {
-            "id": "mnist",
-            "display_name": "Model 1 - MNIST ubyte",
-            "dataset": bundle.get("dataset", "MNIST ubyte data"),
-            "accuracy": bundle.get("accuracy"),
-            "test_samples": bundle.get("test_samples"),
-            "train_samples": bundle.get("train_samples"),
-            "trained_at": bundle.get("trained_at"),
-            "model": bundle["model"],
-        }
+        try:
+            bundle = load_joblib_bundle(LEGACY_MODEL_PATH)
+            loaded_models["mnist"] = {
+                "id": "mnist",
+                "display_name": "Model 1 - MNIST ubyte",
+                "dataset": bundle.get("dataset", "MNIST ubyte data"),
+                "accuracy": bundle.get("accuracy"),
+                "test_samples": bundle.get("test_samples"),
+                "train_samples": bundle.get("train_samples"),
+                "trained_at": bundle.get("trained_at"),
+                "model": bundle["model"],
+            }
+        except RuntimeError as exc:
+            print(f"Skipping legacy model: {exc}", flush=True)
 
     if not loaded_models:
         raise FileNotFoundError(
-            "Model files not found. Please train the models first by running: "
-            "python ml/train_model.py"
+            "No usable model files were loaded. If this is Railway, upload a model "
+            "file as a GitHub Release asset and set MODEL_CUSTOM_COMBINED_URL or "
+            "another model URL environment variable."
         )
 
     return loaded_models

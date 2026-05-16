@@ -37,7 +37,7 @@ web: python start.py
 
 Railway provides the `PORT` environment variable automatically. The `start.py` launcher reads that value and starts Gunicorn with a valid numeric port.
 
-## 3. Model Files and Git LFS
+## 3. Model Files
 
 The trained `.joblib` model files can be large, especially:
 
@@ -45,7 +45,32 @@ The trained `.joblib` model files can be large, especially:
 ml/digit_model_custom_combined.joblib
 ```
 
-Use Git LFS for model files:
+Railway may receive Git LFS pointer files instead of the real model files. The most reliable GitHub + Railway setup is to upload the real model file as a **GitHub Release asset**, then give Railway the download URL.
+
+Recommended Railway model:
+
+```text
+ml/digit_model_custom_combined.joblib
+```
+
+### Option A: GitHub Release Asset
+
+1. Open your GitHub repository.
+2. Go to **Releases**.
+3. Create a new release, for example `models-v1`.
+4. Upload `ml/digit_model_custom_combined.joblib` as a release asset.
+5. Copy the asset download URL.
+6. In Railway, add this environment variable:
+
+```text
+MODEL_CUSTOM_COMBINED_URL=<your GitHub release asset download URL>
+```
+
+On startup, `start.py` downloads the model from this URL if the repository contains only a Git LFS pointer.
+
+### Option B: Git LFS
+
+Use Git LFS for model files if your deployment platform checks out LFS objects correctly:
 
 ```powershell
 git lfs install
@@ -60,6 +85,7 @@ Before pushing, confirm that Git LFS has uploaded the actual model files:
 
 ```powershell
 git lfs ls-files
+git lfs push --all origin main
 ```
 
 ## 4. Push to GitHub
@@ -93,7 +119,20 @@ git push origin master
 
 ## 6. Environment and Start Command
 
-No custom environment variables are required for prediction.
+If Railway receives Git LFS pointer files, set at least one model URL environment variable:
+
+```text
+MODEL_CUSTOM_COMBINED_URL=<your GitHub release asset download URL>
+```
+
+Optional model URL variables:
+
+```text
+MODEL_MNIST_URL
+MODEL_KAGGLE_URL
+MODEL_COMBINED_URL
+MODEL_CUSTOM_COMBINED_URL
+```
 
 Railway should run:
 
@@ -121,6 +160,6 @@ After Railway finishes building:
 
 - Do not commit raw datasets unless needed. The app only needs trained `.joblib` models for prediction.
 - If Railway build fails because of large files, confirm Git LFS is enabled and the model files are uploaded through LFS.
-- If Railway logs show `KeyError: 118`, Railway is loading a Git LFS pointer instead of the real model file. Confirm the real model files were uploaded to Git LFS with `git lfs push --all origin main`.
+- If Railway logs show `Git LFS pointer`, set `MODEL_CUSTOM_COMBINED_URL` to a real model download URL.
 - If OpenCV fails during deployment, keep `opencv-python-headless` in `requirements.txt`.
 - If requests are too large, use smaller uploaded images or compress images before submitting feedback.
