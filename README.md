@@ -19,7 +19,7 @@ HANDWRITTENDIGITSYSTEM/
 |-- app.py
 |-- requirements.txt
 |-- Procfile
-|-- Dockerfile
+|-- start.py
 |-- README.md
 |-- data/
 |   |-- mnist/

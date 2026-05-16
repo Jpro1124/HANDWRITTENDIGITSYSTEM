@@ -19,7 +19,7 @@ Make sure these files are committed:
 app.py
 requirements.txt
 Procfile
-Dockerfile
+start.py
 README.md
 .gitignore
 .gitattributes
@@ -32,10 +32,10 @@ visualization/
 The `Procfile` should contain:
 
 ```text
-web: gunicorn --bind 0.0.0.0:$PORT --timeout 180 app:app
+web: python start.py
 ```
 
-Railway provides the `PORT` environment variable automatically.
+Railway provides the `PORT` environment variable automatically. The `start.py` launcher reads that value and starts Gunicorn with a valid numeric port.
 
 ## 3. Model Files and Git LFS
 
@@ -92,13 +92,13 @@ No custom environment variables are required for prediction.
 Railway should run:
 
 ```text
-gunicorn --bind 0.0.0.0:$PORT --timeout 180 app:app
+python start.py
 ```
 
 If Railway asks for a start command manually, use:
 
 ```text
-gunicorn --bind 0.0.0.0:$PORT --timeout 180 app:app
+python start.py
 ```
 
 ## 7. Verify Deployment
