@@ -1,9 +1,3 @@
----
-title: Handwritten Digit Recognition System
-sdk: docker
-app_port: 7860
----
-
 # Handwritten Digit Recognition System
 
 A Flask-based handwritten digit recognition web app. Users can predict digits in two ways:
@@ -11,11 +5,12 @@ A Flask-based handwritten digit recognition web app. Users can predict digits in
 - Upload, drag, or paste a digit image.
 - Draw a digit directly inside the app using the pencil canvas.
 
-The system supports three selectable trained models:
+The system supports four selectable trained models:
 
 - Model 1 - MNIST ubyte data
 - Model 2 - Kaggle-style folder image dataset
 - Model 3 - Combined MNIST + Kaggle dataset
+- Model 4 - Handwritten folder + custom feedback dataset
 
 ## Project Structure
 
@@ -23,6 +18,8 @@ The system supports three selectable trained models:
 HANDWRITTENDIGITSYSTEM/
 |-- app.py
 |-- requirements.txt
+|-- Procfile
+|-- Dockerfile
 |-- README.md
 |-- data/
 |   |-- mnist/
@@ -30,7 +27,12 @@ HANDWRITTENDIGITSYSTEM/
 |   |   |-- train-labels.idx1-ubyte
 |   |   |-- t10k-images.idx3-ubyte
 |   |   `-- t10k-labels.idx1-ubyte
-|   `-- handwritten_digits/
+|   |-- handwritten_digits/
+|   |   |-- 0/
+|   |   |-- 1/
+|   |   |-- ...
+|   |   `-- 9/
+|   `-- customize_data/
 |       |-- 0/
 |       |-- 1/
 |       |-- ...
@@ -40,7 +42,8 @@ HANDWRITTENDIGITSYSTEM/
 |   |-- train_model.py
 |   |-- digit_model_mnist.joblib
 |   |-- digit_model_kaggle.joblib
-|   `-- digit_model_combined.joblib
+|   |-- digit_model_combined.joblib
+|   `-- digit_model_custom_combined.joblib
 |-- static/
 |   |-- css/style.css
 |   `-- js/app.js
@@ -134,9 +137,11 @@ Train only one model:
 python ml/train_model.py --model mnist
 python ml/train_model.py --model kaggle
 python ml/train_model.py --model combined
+python ml/train_model.py --model custom_combined
 ```
 
 The combined model is trained only when both MNIST and Kaggle datasets are available.
+The custom combined model uses only `data/handwritten_digits` and `data/customize_data`.
 
 Trained model files are saved in `ml/`:
 
@@ -144,6 +149,7 @@ Trained model files are saved in `ml/`:
 digit_model_mnist.joblib
 digit_model_kaggle.joblib
 digit_model_combined.joblib
+digit_model_custom_combined.joblib
 ```
 
 Current training results:
@@ -153,6 +159,7 @@ Current training results:
 | Model 1 | MNIST ubyte | 97.22% |
 | Model 2 | Kaggle folder images | 95.08% |
 | Model 3 | Combined MNIST + Kaggle | 96.32% |
+| Model 4 | Handwritten + custom feedback | 94.20% |
 
 ## Running the App
 

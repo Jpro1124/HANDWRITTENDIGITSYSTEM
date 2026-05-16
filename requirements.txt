@@ -4,3 +4,4 @@ opencv-python-headless
 scikit-learn
 joblib
 gunicorn
+matplotlib

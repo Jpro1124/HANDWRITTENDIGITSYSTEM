@@ -1,0 +1,71 @@
+{
+  "model_id": "custom_combined",
+  "display_name": "Model 4 - Handwritten + Custom Feedback",
+  "dataset": "Kaggle folder image data + custom feedback data",
+  "accuracy": 94.2,
+  "test_samples": 4538,
+  "macro_avg": {
+    "precision": 0.9422322674160668,
+    "recall": 0.9417628314395708,
+    "f1-score": 0.9418399325368807,
+    "support": 4538.0
+  },
+  "weighted_avg": {
+    "precision": 0.9422979885446628,
+    "recall": 0.9420449537241076,
+    "f1-score": 0.9420135031046069,
+    "support": 4538.0
+  },
+  "top_confusions": [
+    {
+      "actual": 4,
+      "predicted": 1,
+      "count": 10
+    },
+    {
+      "actual": 5,
+      "predicted": 3,
+      "count": 10
+    },
+    {
+      "actual": 5,
+      "predicted": 6,
+      "count": 9
+    },
+    {
+      "actual": 0,
+      "predicted": 6,
+      "count": 8
+    },
+    {
+      "actual": 3,
+      "predicted": 5,
+      "count": 8
+    },
+    {
+      "actual": 4,
+      "predicted": 9,
+      "count": 8
+    },
+    {
+      "actual": 2,
+      "predicted": 7,
+      "count": 7
+    },
+    {
+      "actual": 3,
+      "predicted": 7,
+      "count": 7
+    },
+    {
+      "actual": 8,
+      "predicted": 5,
+      "count": 7
+    },
+    {
+      "actual": 9,
+      "predicted": 0,
+      "count": 7
+    }
+  ]
+}

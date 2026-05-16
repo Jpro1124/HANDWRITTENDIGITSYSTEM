@@ -31,6 +31,10 @@ MODEL_CONFIGS = {
         "display_name": "Model 3 - Combined MNIST + Kaggle",
         "path": MODEL_DIR / "digit_model_combined.joblib",
     },
+    "custom_combined": {
+        "display_name": "Model 4 - Handwritten + Custom Feedback",
+        "path": MODEL_DIR / "digit_model_custom_combined.joblib",
+    },
 }
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp"}
