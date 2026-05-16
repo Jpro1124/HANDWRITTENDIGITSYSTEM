@@ -63,6 +63,26 @@ def allowed_file(filename):
     )
 
 
+def is_git_lfs_pointer(file_path):
+    try:
+        with file_path.open("rb") as file:
+            return file.read(128).startswith(
+                b"version https://git-lfs.github.com/spec/v1"
+            )
+    except OSError:
+        return False
+
+
+def load_joblib_bundle(file_path):
+    if is_git_lfs_pointer(file_path):
+        raise RuntimeError(
+            f"{file_path.name} is a Git LFS pointer, not the real model file. "
+            "Run `git lfs pull` during deployment or make sure Railway pulls LFS files."
+        )
+
+    return joblib.load(file_path)
+
+
 def load_model_bundles():
     loaded_models = {}
 
@@ -70,7 +90,7 @@ def load_model_bundles():
         if not config["path"].exists():
             continue
 
-        bundle = joblib.load(config["path"])
+        bundle = load_joblib_bundle(config["path"])
         loaded_models[model_id] = {
             "id": model_id,
             "display_name": bundle.get("display_name", config["display_name"]),
@@ -83,7 +103,7 @@ def load_model_bundles():
         }
 
     if not loaded_models and LEGACY_MODEL_PATH.exists():
-        bundle = joblib.load(LEGACY_MODEL_PATH)
+        bundle = load_joblib_bundle(LEGACY_MODEL_PATH)
         loaded_models["mnist"] = {
             "id": "mnist",
             "display_name": "Model 1 - MNIST ubyte",
